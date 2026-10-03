@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: support-ticket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: support_assistant
+      POSTGRES_USER: support_user
+      POSTGRES_PASSWORD: support_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - support_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U support_user -d support_assistant"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: support-ticket-assistant
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/support_assistant
+      DB_USERNAME: support_user
+      DB_PASSWORD: support_password
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_ENDPOINT: ${LLM_ENDPOINT:-https://api.openai.com/v1/chat/completions}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4.1-mini}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+    ports:
+      - "8080:8080"
+
+volumes:
+  support_postgres_data:
