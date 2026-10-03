@@ -58,9 +58,6 @@ public class TicketService {
 
         /*
          * Publish the event after the ticket has been saved.
-         *
-         * TicketAnalysisWorker listens for this event and starts
-         * the asynchronous LLM analysis after the transaction commits.
          */
         eventPublisher.publishEvent(
                 new TicketCreated(ticket.getId())
